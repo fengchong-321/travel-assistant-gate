@@ -44,7 +44,11 @@ class LlmClient(Protocol):
 
 
 class OpenAiCompatLlm:
-    """真实客户端:OpenAI 兼容接口 + function calling,temperature=0。"""
+    """真实客户端:OpenAI 兼容接口 + function calling,temperature=0。
+
+    stats 是协议稳定性实验(FC vs 文本协议决策)的观测点:解析失败与
+    空参数是 function calling 不稳定的两个典型信号。
+    """
 
     def __init__(self, settings: Settings):
         self.model_name = settings.llm_model
@@ -54,6 +58,12 @@ class OpenAiCompatLlm:
         )
         self._model = settings.llm_model
         self._temperature = settings.temperature
+        self.stats: dict[str, int] = {
+            "calls": 0,  # LLM 请求次数
+            "fc_tool_calls": 0,  # 模型发起的工具调用数
+            "parse_errors": 0,  # arguments JSON 解析失败次数
+            "empty_args": 0,  # 解析结果为空 dict 的调用数(可疑信号)
+        }
 
     def chat(
         self, messages: list[dict[str, Any]], tools: list[dict[str, Any]]
@@ -65,14 +75,19 @@ class OpenAiCompatLlm:
             temperature=self._temperature,
         )
         msg = resp.choices[0].message
+        self.stats["calls"] += 1
         calls: list[LlmToolCall] = []
         for c in msg.tool_calls or []:
             if c.type != "function":
                 continue  # 只消费 function calling,custom 工具调用不支持
+            self.stats["fc_tool_calls"] += 1
             try:
                 args = json.loads(c.function.arguments or "{}")
             except ValueError:
+                self.stats["parse_errors"] += 1
                 args = {}
+            if not args:
+                self.stats["empty_args"] += 1
             calls.append(LlmToolCall(name=c.function.name, args=args))
         return LlmResponse(content=msg.content, tool_calls=calls)
 

@@ -425,7 +425,8 @@ def build_tool_registry(
         ),
         "ask_user": ToolDef(
             name="ask_user",
-            description="向用户追问缺失的关键信息(如订单号、日期)。信息不足时必须先追问,禁止猜测参数调用业务工具。",
+            description="向用户追问或确认信息时必须调用本工具(而不是在回复中直接提问),"
+            "例如订单号、日期、退票原因等关键信息缺失时。禁止猜测参数调用业务工具。",
             parameters={
                 "type": "object",
                 "properties": {
