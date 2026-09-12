@@ -43,6 +43,6 @@ extend-immutable-calls = ["typer.Option", "typer.Argument"]
 testpaths = ["tests"]
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.12"  # numpy 2.x 类型存根使用 3.12 的 type 语句,3.11 无法解析
 warn_unused_ignores = true
 check_untyped_defs = true

@@ -334,7 +334,7 @@ def build_tool_registry(
         ),
         "calc_refund_fee": ToolDef(
             name="calc_refund_fee",
-            description="计算订单退票手续费与实退金额(只算不退)。按申请日距入园日分档:≥48小时免费,24-48小时收20%,24小时内收50%。",
+            description="计算订单退票手续费与实退金额(只算不退)。按订单整体退款,不支持按数量部分退。手续费按申请日距入园日分档:≥48小时免费,24-48小时收20%,24小时内收50%。",
             parameters={
                 "type": "object",
                 "properties": {
@@ -347,7 +347,7 @@ def build_tool_registry(
         ),
         "create_refund": ToolDef(
             name="create_refund",
-            description="提交退款申请(写操作):校验订单可退后创建退款单、流转订单状态并发送通知。同一订单重复申请幂等返回,不会重复建单。",
+            description="提交退款申请(写操作,按订单整体退款,不支持部分退):校验订单可退后创建退款单、流转订单状态并发送通知。同一订单重复申请幂等返回,不会重复建单。",
             parameters={
                 "type": "object",
                 "properties": {
