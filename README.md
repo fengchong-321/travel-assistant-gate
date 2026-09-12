@@ -46,6 +46,7 @@ uv run mypy travelgate sut_agent         # 类型检查
 ## 路线
 
 - [x] 仓库脚手架 + 归一化匹配契约 + 基线 diff + 世界状态模型(四表/种子/固定时钟)
-- [ ] 被测 Agent:工具层 + ReAct 循环 + FastAPI 服务
+- [x] 被测 Agent:工具层 + ReAct 循环 + RAG + FastAPI 服务;工具调用协议经
+      [FC 稳定性实验](experiments/fc-stability-report.md)定为 function calling(10 任务 × 3 遍完成率 100%)
 - [ ] 轨迹 schema + 四维评分器 + 任务集
 - [ ] eval-gated CI:PR 触发评测子集,对比基线,退化即红
