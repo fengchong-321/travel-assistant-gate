@@ -101,6 +101,9 @@ uv run python scripts/run_eval.py --limit 20 --repeats 1 \
 门禁对比的基线必须与跑法同口径(同子集同遍数),全量基线在
 `baselines/agent.json`。
 
+CI 在线门禁的 `TAG_LLM_API_KEY` 在仓库 Settings → Secrets and variables
+→ Actions 配置:加密存储、不可回读、日志自动打码,外部 fork 的 PR 拿不到。
+
 ## 路线
 
 - [x] 仓库脚手架 + 归一化匹配契约 + 基线 diff + 世界状态模型(四表/种子/固定时钟)
