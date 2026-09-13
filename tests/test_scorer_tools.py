@@ -1,4 +1,4 @@
-"""工具维评分器表驱动单测:三档匹配、forbidden 否决、参数 diff、元工具过滤。
+"""工具维评分器表驱动单测:四档匹配、forbidden 否决、参数 diff、元工具过滤。
 
 全部用手工构造的轨迹(离线纯函数,无 LLM 无服务)。
 """
@@ -76,6 +76,16 @@ def test_contains_requires_all_present() -> None:
     r = score_tools(case, make_traj(["get_order"]), META)
     assert not r.passed
     assert "缺少工具" in r.reasons[0]
+
+
+def test_any_of_accepts_any_single_path() -> None:
+    """等价信息源场景:列表内任一路径命中即过,全不中才挂。"""
+    case = make_case(expected_tools={"mode": "any_of", "tools": ["get_order", "check_inventory"]})
+    assert score_tools(case, make_traj(["get_order"]), META).passed
+    assert score_tools(case, make_traj(["check_inventory"]), META).passed
+    r = score_tools(case, make_traj(["calc_refund_fee"]), META)
+    assert not r.passed
+    assert "无一路径命中" in r.reasons[0]
 
 
 def test_free_mode_skips_sequence_but_keeps_forbidden() -> None:

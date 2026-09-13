@@ -226,8 +226,8 @@ def test_semantic_anchor_is_valid() -> None:
 
 
 def test_golden_anchors_bootstrap() -> None:
-    """自举:真实 golden 全部标注了规划锚点(规划维不留盲区)。"""
+    """自举:真实 golden 全部标注了规划锚点(any_of 档路径检查由工具维承载,可免)。"""
     cases = load_tasks(GOLDEN, make_meta())
-    assert all(c.plan_anchors for c in cases)
+    assert all(c.plan_anchors or c.expected_tools.mode == "any_of" for c in cases)
     semantic = [a for c in cases for a in c.plan_anchors if a.tool is None]
     assert len(semantic) == 26  # judge 用量上限:标注纪律决定,不是运行时碰运气

@@ -67,7 +67,7 @@ class ToolExpectation(BaseModel):
     匹配口径:发生即算(失败调用也计入)—— 调了就是选择;防线兜底是世界断言。
     """
 
-    mode: Literal["exact_seq", "set", "contains", "free"]
+    mode: Literal["exact_seq", "set", "contains", "any_of", "free"]
     tools: list[str] = Field(default_factory=list)
     forbidden: list[str] = Field(default_factory=list)
 
