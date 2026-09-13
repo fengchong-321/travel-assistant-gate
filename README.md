@@ -76,6 +76,9 @@ ruff ✓  mypy ✓  pytest 167 ✓          # 单元测试对提示词回归无�
 就是它的回归测试。这也是容差必须由校准数据决定的原因:本仓 3 轮重跑
 指标极差为 0(`baselines/tolerance.json`),0.05 的容差才只拦真实退化。
 
+复现:删掉 `sut_agent/prompts.py` 规则 1 那一行,跑上面"CI 门禁同款
+跑法",观察 exit 1 与退化清单;`git checkout` 恢复后复跑即回绿。
+
 ## 开发
 
 ```bash
@@ -84,6 +87,19 @@ uv run pytest                            # 全离线单测
 uv run ruff check .                      # lint
 uv run mypy travelgate sut_agent         # 类型检查
 ```
+
+在线评测(需 OpenAI 兼容 LLM key,默认智谱 glm-4-flash):
+
+```bash
+export TAG_LLM_API_KEY=...               # 必填
+uv run python scripts/run_eval.py        # 全量 51 条(写操作/对抗类按标注跑 3 遍)
+uv run python scripts/run_eval.py --limit 20 --repeats 1 \
+    --gate baselines/ci-subset.json --tolerance 0.05   # CI 门禁同款跑法
+```
+
+记分卡输出到 `experiments/eval-report.md`(类别切片 → 明细 → 失败详情三层)。
+门禁对比的基线必须与跑法同口径(同子集同遍数),全量基线在
+`baselines/agent.json`。
 
 ## 路线
 
