@@ -19,6 +19,7 @@ from typing import Any
 from pydantic import BaseModel
 
 from travelgate.normalize import normalize
+from travelgate.schema import ToolMeta
 
 from .world import TODAY
 
@@ -312,6 +313,15 @@ def _make_search_knowledge(retriever: KnowledgeRetriever | None) -> Callable[...
 # ── 注册表与统一执行入口 ──────────────────────────────────────────────────
 
 _USER_ID_PARAM = {"type": "string", "description": "当前用户 ID,会话上下文给出,如 U001"}
+
+
+def tool_meta_snapshot(registry: dict[str, ToolDef]) -> dict[str, ToolMeta]:
+    """注册表 → 评测平台的工具元数据(writes/meta)。
+
+    评分器不硬编码工具清单:元工具过滤、写工具判定全部消费这份导出,
+    工具增删只动注册表,评分器与 golden 的校验口径自动跟随。
+    """
+    return {n: ToolMeta(name=n, writes=t.writes, meta=t.meta) for n, t in registry.items()}
 
 
 def build_tool_registry(
