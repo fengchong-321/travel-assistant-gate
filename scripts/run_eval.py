@@ -17,6 +17,11 @@ from datetime import datetime
 from pathlib import Path
 
 from sut_agent.agent import LlmClient
+from travelgate.baseline import (
+    BaselineMetrics,
+    diff_against_baseline,
+    save_baseline,
+)
 from travelgate.judges import LlmMatcher, PlanMatcher
 from travelgate.schema import AgentTaskCase, CaseResult, ToolMeta, load_tasks
 from travelgate.scorers import evaluate_case
@@ -74,6 +79,25 @@ def write_report(
         f"- judge 用量:judge_calls={judge_stats.get('judge_calls', 0)},"
         f"parse_failures={judge_stats.get('parse_failures', 0)}(仅语义锚)",
         "",
+        "## 类别切片",
+        "",
+        "| 类别 | case | pass | " + " | ".join(DIMS) + " |",
+        "|---|---|---|---|---|---|---|---|",
+    ]
+    cats = sorted({r.category for r in results})
+    for cat in cats:
+        sub = [r for r in results if r.category == cat]
+        cp = sum(r.passed for r in sub)
+        cd = {d: sum(dim_mark(r, d) == "✓" for r in sub) for d in DIMS}
+        lines.append(
+            f"| {cat} | {len(sub)} | {cp} | "
+            + " | ".join(f"{cd[d]}/{len(sub)}" for d in DIMS)
+            + " |"
+        )
+    lines += [
+        "",
+        "## 明细",
+        "",
         "| case | 类别 | pass | " + " | ".join(DIMS) + " | 失败摘要 |",
         "|---|---|---|---|---|---|---|---|---|",
     ]
@@ -100,11 +124,40 @@ def write_report(
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
+def to_metrics(results: list[CaseResult], model: str) -> BaselineMetrics:
+    """CaseResult 列表 → 基线指标(总体/四维/类别三层,小而稳)。"""
+    total = len(results)
+    cats = sorted({r.category for r in results})
+    return BaselineMetrics(
+        started_at=datetime.now().strftime("%Y-%m-%d %H:%M"),
+        sut_model=model,
+        pass_rate=round(sum(r.passed for r in results) / total, 4),
+        dimension_scores={
+            d: round(sum(dim_mark(r, d) == "✓" for r in results) / total, 4)
+            for d in DIMS
+        },
+        per_category_pass_rate={
+            c: round(
+                sum(r.passed for r in results if r.category == c)
+                / max(1, sum(1 for r in results if r.category == c)),
+                4,
+            )
+            for c in cats
+        },
+    )
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repeats", type=int, default=None,
                         help="统一覆盖每 case 遍数(默认用各 case 的 repeats 标注)")
     parser.add_argument("--limit", type=int, default=None, help="只跑前 N 条(冒烟用)")
+    parser.add_argument("--save-baseline", type=Path, default=None,
+                        help="把本次指标写入基线文件(认可版落盘)")
+    parser.add_argument("--gate", type=Path, default=None,
+                        help="对比基线,退化超容差即 exit 1(eval-gated CI 用)")
+    parser.add_argument("--tolerance", type=float, default=0.0,
+                        help="门禁容差(0-1,须大于多轮重跑方差)")
     args = parser.parse_args()
 
     settings = get_settings()
@@ -155,6 +208,24 @@ def main() -> None:
         OUT_PATH,
     )
     print(f"记分卡 → {OUT_PATH}")
+
+    if args.save_baseline:
+        save_baseline(to_metrics(results, settings.llm_model), args.save_baseline)
+        print(f"基线落盘 → {args.save_baseline}")
+    if args.gate:
+        from travelgate.baseline import load_baseline
+
+        regressions = diff_against_baseline(
+            to_metrics(results, settings.llm_model),
+            load_baseline(args.gate),
+            tolerance=args.tolerance,
+        )
+        if regressions:
+            print("\n⛔ 门禁拦截:对比基线退化 ——")
+            for r in regressions:
+                print(f"  - {r}")
+            raise SystemExit(1)
+        print("✅ 门禁通过:无超容差退化")
 
 
 if __name__ == "__main__":
