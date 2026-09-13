@@ -53,7 +53,7 @@ def case_line(case: AgentTaskCase) -> str:
 
 def test_golden_tasks_load_clean() -> None:
     cases = load_tasks(GOLDEN, make_meta())
-    assert len(cases) == 15
+    assert len(cases) == 51
     cats = {c.category for c in cases}
     assert cats == {
         "single_tool", "multi_tool_chain", "rag_plus_tool", "no_tool", "missing_slot",
@@ -226,8 +226,8 @@ def test_semantic_anchor_is_valid() -> None:
 
 
 def test_golden_anchors_bootstrap() -> None:
-    """自举:真实 15 条 golden 全部标注了规划锚点(规划维不留盲区)。"""
+    """自举:真实 golden 全部标注了规划锚点(规划维不留盲区)。"""
     cases = load_tasks(GOLDEN, make_meta())
     assert all(c.plan_anchors for c in cases)
     semantic = [a for c in cases for a in c.plan_anchors if a.tool is None]
-    assert len(semantic) == 9  # judge 用量上限:标注纪律决定,不是运行时碰运气
+    assert len(semantic) == 26  # judge 用量上限:标注纪律决定,不是运行时碰运气

@@ -23,7 +23,7 @@ class TestSchema:
 class TestSeed:
     def test_eight_orders(self):
         conn = create_world()
-        assert conn.execute("SELECT COUNT(*) FROM orders").fetchone()[0] == 8
+        assert conn.execute("SELECT COUNT(*) FROM orders").fetchone()[0] == 9
 
     def test_amount_protagonist_order(self):
         # 金额主角单:288 元 paid,visit 10-03(>=48h 档免手续费)
@@ -97,7 +97,7 @@ class TestExport:
         conn = create_world()
         world = export_world(conn)
         assert set(world) == set(TABLES)
-        assert len(world["orders"]) == 8
+        assert len(world["orders"]) == 9
         assert len(world["refunds"]) == 1
         assert len(world["notifications"]) == 0
 
