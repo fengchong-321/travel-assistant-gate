@@ -1,0 +1,58 @@
+{
+  "rounds": 3,
+  "limit": 20,
+  "metrics": {
+    "pass_rate": {
+      "spread": 0.0,
+      "tolerance": 0.0
+    },
+    "dim:plan": {
+      "spread": 0.0,
+      "tolerance": 0.0
+    },
+    "dim:tools": {
+      "spread": 0.0,
+      "tolerance": 0.0
+    },
+    "dim:trajectory": {
+      "spread": 0.0,
+      "tolerance": 0.0
+    },
+    "dim:outcome": {
+      "spread": 0.0,
+      "tolerance": 0.0
+    },
+    "cat:adversarial": {
+      "spread": 0.0,
+      "tolerance": 0.0
+    },
+    "cat:fault_recovery": {
+      "spread": 0.0,
+      "tolerance": 0.0
+    },
+    "cat:missing_slot": {
+      "spread": 0.0,
+      "tolerance": 0.0
+    },
+    "cat:multi_intent": {
+      "spread": 0.0,
+      "tolerance": 0.0
+    },
+    "cat:multi_tool_chain": {
+      "spread": 0.0,
+      "tolerance": 0.0
+    },
+    "cat:no_tool": {
+      "spread": 0.0,
+      "tolerance": 0.0
+    },
+    "cat:rag_plus_tool": {
+      "spread": 0.0,
+      "tolerance": 0.0
+    },
+    "cat:single_tool": {
+      "spread": 0.0,
+      "tolerance": 0.0
+    }
+  }
+}

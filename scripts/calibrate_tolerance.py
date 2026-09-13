@@ -19,12 +19,11 @@ from travelgate.schema import load_tasks
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from sut_agent.judges import LlmMatcher  # noqa: E402
-
 from scripts.run_eval import to_metrics  # noqa: E402
 from sut_agent.agent import OpenAiCompatLlm, run_agent  # noqa: E402
 from sut_agent.settings import get_settings  # noqa: E402
 from sut_agent.tools import build_tool_registry, tool_meta_snapshot  # noqa: E402
+from travelgate.judges import LlmMatcher  # noqa: E402
 from travelgate.scorers import evaluate_case  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent

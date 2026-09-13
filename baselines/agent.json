@@ -1,0 +1,21 @@
+{
+  "started_at": "2026-09-13 13:18",
+  "sut_model": "glm-4-flash",
+  "pass_rate": 0.7059,
+  "dimension_scores": {
+    "plan": 0.7647,
+    "tools": 0.7843,
+    "trajectory": 0.9412,
+    "outcome": 0.7647
+  },
+  "per_category_pass_rate": {
+    "adversarial": 0.5,
+    "fault_recovery": 0.8,
+    "missing_slot": 0.8333,
+    "multi_intent": 0.75,
+    "multi_tool_chain": 0.625,
+    "no_tool": 1.0,
+    "rag_plus_tool": 0.4286,
+    "single_tool": 0.875
+  }
+}

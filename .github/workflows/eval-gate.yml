@@ -28,9 +28,13 @@ jobs:
             echo "::warning::TAG_LLM_API_KEY 未配置,评测门禁跳过(离线门禁见 ci.yml)"
             exit 0
           fi
+          # 容差依据 baselines/tolerance.json:同代码 3 轮极差 0(temperature=0
+          # + 独立世界),0.05 = 子集内单 case 翻转粒度,只拦真实退化。
+          # 基线必须同口径(同子集同遍数):全量基线 vs 子集跑分恒"提升",
+          # 门禁灵敏度归零 —— ci-subset.json 由 --limit 20 --repeats 1 落盘
           uv run python scripts/run_eval.py \
             --limit 20 --repeats 1 \
-            --gate baselines/agent.json --tolerance 0.10
+            --gate baselines/ci-subset.json --tolerance 0.05
       - name: Upload scorecard
         if: always()
         uses: actions/upload-artifact@v4
