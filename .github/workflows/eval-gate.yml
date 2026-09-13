@@ -1,0 +1,40 @@
+name: eval-gate
+
+# 评测门禁:PR 触发在线评测子集,对比 baselines/agent.json,退化超容差即红。
+# 单元测试全绿 ≠ 执行质量没退化 —— 提示词/工具改动的回归只有轨迹评测能抓。
+# 需要仓库 secret TAG_LLM_API_KEY(智谱兼容 key);未配置时 warning 跳过,
+# 离线门禁由 ci.yml 承担。
+
+on:
+  pull_request:
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: uv sync
+      - name: Eval gate(20 条子集 × 基线对比)
+        env:
+          TAG_LLM_API_KEY: ${{ secrets.TAG_LLM_API_KEY }}
+          TAG_LLM_BASE_URL: ${{ secrets.TAG_LLM_BASE_URL }}
+        run: |
+          if [ -z "$TAG_LLM_API_KEY" ]; then
+            echo "::warning::TAG_LLM_API_KEY 未配置,评测门禁跳过(离线门禁见 ci.yml)"
+            exit 0
+          fi
+          uv run python scripts/run_eval.py \
+            --limit 20 --repeats 1 \
+            --gate baselines/agent.json --tolerance 0.10
+      - name: Upload scorecard
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-scorecard
+          path: experiments/eval-report.md
+          if-no-files-found: ignore
