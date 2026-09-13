@@ -25,7 +25,6 @@ jobs:
       - name: Eval gate(20 条子集 × 基线对比)
         env:
           TAG_LLM_API_KEY: ${{ secrets.TAG_LLM_API_KEY }}
-          TAG_LLM_BASE_URL: ${{ secrets.TAG_LLM_BASE_URL }}
         run: |
           if [ -z "$TAG_LLM_API_KEY" ]; then
             echo "::warning::TAG_LLM_API_KEY 未配置,评测门禁跳过(离线门禁见 ci.yml)"
