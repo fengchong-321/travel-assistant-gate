@@ -10,26 +10,13 @@
 
 from __future__ import annotations
 
-from typing import Any
-
-from travelgate.normalize import normalize
 from travelgate.schema import (
     AgentTaskCase,
     DimensionResult,
     ToolMeta,
     Trajectory,
 )
-
-
-def _value_match(expected: Any, actual: Any) -> bool:
-    """参数值归一比对:数值统一 float,字符串去空白,其余精确相等。"""
-    try:
-        return float(expected) == float(actual)  # 288 / 288.0 / "288" 同值
-    except (TypeError, ValueError):
-        pass
-    if isinstance(expected, str) and isinstance(actual, str):
-        return normalize(expected) == normalize(actual)
-    return expected == actual
+from travelgate.scorers.common import value_match
 
 
 def _arg_diff(case: AgentTaskCase, traj: Trajectory) -> list[str]:
@@ -41,7 +28,7 @@ def _arg_diff(case: AgentTaskCase, traj: Trajectory) -> list[str]:
             reasons.append(f"参数断言失败:{tool} 未被调用,无法比对 {sorted(kwargs)}")
             continue
         for key, expected in kwargs.items():
-            if not any(key in c.args and _value_match(expected, c.args[key]) for c in calls):
+            if not any(key in c.args and value_match(expected, c.args[key]) for c in calls):
                 actual = [c.args.get(key, "<缺失>") for c in calls]
                 reasons.append(
                     f"参数断言失败:{tool}.{key} 期望 {expected!r},实际 {actual}"

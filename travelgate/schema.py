@@ -94,13 +94,27 @@ class WorldAssertion(BaseModel):
 
     - eq/ne:where 选行后断言 field 的值(金额/状态流转)
     - count:断言 where 选出的行数(幂等:重复申请后 refunds 仍只有 1 行)
+    - exists:断言 where 选出的行存在/不存在(改期成功后通知已留痕)
     """
 
     table: str
-    op: Literal["eq", "ne", "count"] = "eq"
+    op: Literal["eq", "ne", "count", "exists"] = "eq"
     where: dict[str, Any] = Field(default_factory=dict)
     field: str | None = None
     value: Any = None
+
+
+class PlanAnchor(BaseModel):
+    """规划锚点:意图级步骤,工具命中即覆盖(零 LLM 成本)。
+
+    tool 非空:轨迹中出现该工具调用(可选参数约束)即覆盖 —— 确定性判定;
+    tool 为空:纯语义锚点,只能交给 PlanMatcher 语义判定(judge 用量因此
+    被压到只剩语义锚,标注纪律:工具确定的步骤一律标工具锚)。
+    """
+
+    description: str
+    tool: str | None = None
+    args_match: dict[str, Any] = Field(default_factory=dict)
 
 
 class ToolMeta(BaseModel):
@@ -126,7 +140,9 @@ class AgentTaskCase(BaseModel):
     expected_tools: ToolExpectation
     expected_args: dict[str, dict[str, Any]] = Field(default_factory=dict)
     trajectory_expectation: TrajectoryExpectation = Field(default_factory=TrajectoryExpectation)
+    plan_anchors: list[PlanAnchor] = Field(default_factory=list)
     answer_keywords: list[str] = Field(default_factory=list)
+    answer_forbidden_keywords: list[str] = Field(default_factory=list)
     world_assertions: list[WorldAssertion] = Field(default_factory=list)
 
 
@@ -136,6 +152,16 @@ class DimensionResult(BaseModel):
     dimension: Literal["plan", "tools", "trajectory", "outcome"]
     passed: bool
     reasons: list[str] = Field(default_factory=list)
+
+
+class CaseResult(BaseModel):
+    """case 级结果:四维 AND。报告与基线 diff 的消费单元。"""
+
+    case_id: str
+    category: str
+    passed: bool
+    dimensions: list[DimensionResult] = Field(default_factory=list)
+    answer: str = ""  # 报告呈现用(截断由报告层负责)
 
 
 # ── 入库校验:配套校验 + 批量报错(错进不了库)──────────────────────────
@@ -180,6 +206,12 @@ def validate_case(case: AgentTaskCase, known: dict[str, ToolMeta]) -> list[str]:
         for role, tool in (("before", oc.before), ("after", oc.after)):
             if tool not in known:
                 err(f"顺序约束 {oc.before}→{oc.after} 的 {role} 工具不存在:{tool}")
+
+    for anchor in case.plan_anchors:
+        if not normalize(anchor.description):
+            err(f"规划锚点描述为空(工具 {anchor.tool})")
+        elif anchor.tool is not None and anchor.tool not in known:
+            err(f"规划锚点「{anchor.description}」的工具不存在:{anchor.tool}")
 
     write_tools = {n for n, m in known.items() if m.writes}
     if case.trajectory_expectation.clarify == "required":

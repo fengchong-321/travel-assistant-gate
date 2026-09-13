@@ -202,3 +202,32 @@ def test_order_constraint_validates_known_tools() -> None:
     )
     errs = validate_case(case, make_meta())
     assert any("顺序约束" in e for e in errs)
+
+
+# ── 规划锚点校验 ───────────────────────────────────────────────────────────
+
+
+def test_anchor_requires_description() -> None:
+    case = make_case(plan_anchors=[{"description": "   ", "tool": "get_order"}])
+    errs = validate_case(case, make_meta())
+    assert any("锚点描述为空" in e for e in errs)
+
+
+def test_anchor_tool_must_be_known() -> None:
+    """语义锚 tool=None 合法;工具锚的工具必须在注册表(标注漂移在入库拦截)。"""
+    case = make_case(plan_anchors=[{"description": "加急退款", "tool": "priority_refund_tool"}])
+    errs = validate_case(case, make_meta())
+    assert any("工具不存在" in e for e in errs)
+
+
+def test_semantic_anchor_is_valid() -> None:
+    case = make_case(plan_anchors=[{"description": "拒绝超出能力范围的请求"}])
+    assert validate_case(case, make_meta()) == []
+
+
+def test_golden_anchors_bootstrap() -> None:
+    """自举:真实 15 条 golden 全部标注了规划锚点(规划维不留盲区)。"""
+    cases = load_tasks(GOLDEN, make_meta())
+    assert all(c.plan_anchors for c in cases)
+    semantic = [a for c in cases for a in c.plan_anchors if a.tool is None]
+    assert len(semantic) == 9  # judge 用量上限:标注纪律决定,不是运行时碰运气
